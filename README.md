@@ -1,0 +1,50 @@
+# PRD Framework — AI Skill
+
+从模糊想法到可交付的 PRD 文档，一站式产品需求分析框架。
+
+## 这是什么
+
+这是一套给 AI 编程助手（Claude Code / Copilot CLI 等）使用的 skill，引导你按 **WHY → WHAT → HOW** 的结构把模糊的产品想法变成清晰的产品决策，最终输出可交付给开发的 PRD 文档。
+
+支持多种需求类型：
+
+| 类型 | 适用场景 |
+|------|---------|
+| **A. 用户功能** | 有明确用户、有界面的功能需求 |
+| **B. 技术/平台能力** | API、算法、基础设施等系统能力 |
+| **C. WHO 模糊** | 连给谁用都不确定的探索型需求 |
+| **D. 系统性改造** | 跨多个模块/触点的整体改动 |
+| **E. 删减/简化** | 减少复杂度而非增加功能 |
+
+## 工作流程
+
+```
+需求分析阶段：WHY → 路由判断 → WHAT → MVP/分期 → 衡量 → HOW → 检查
+文档产出阶段：PRD 文档输出
+```
+
+每步等用户确认后再推进，不跳步、不替用户做决策。
+
+## 安装
+
+详见 [install.md](install.md)。
+
+## 项目结构
+
+```
+prd-framework/
+├── SKILL.md              # 核心 skill 文件
+├── README.md             # 本文档
+├── install.md            # 安装指南
+└── references/
+    ├── copilot-tools.md  # Copilot CLI 工具映射
+    └── codex-tools.md    # GitHub Codex 工具映射
+```
+
+## 跨平台兼容
+
+本 skill 为纯思维框架，不依赖任何 AI 助手的内部工具（Read/Write/Bash 等），因此在所有支持 skill 机制的平台上均可直接使用，无需额外适配。
+
+## License
+
+MIT
