@@ -8,10 +8,10 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/<你的用户名>/prd-framework-skill.git ~/.claude/skills/prd-framework
+git clone https://github.com/<你的用户名>/pm-req-clear.git ~/.claude/skills/prd-framework
 
 # 或在已有 ~/.claude/skills/ 目录下添加子模块
-cd ~/.claude/skills && git submodule add https://github.com/<你的用户名>/prd-framework-skill.git prd-framework
+cd ~/.claude/skills && git submodule add https://github.com/<你的用户名>/pm-req-clear.git prd-framework
 ```
 
 ### 方法二：添加到项目级 skills 目录
@@ -19,7 +19,7 @@ cd ~/.claude/skills && git submodule add https://github.com/<你的用户名>/pr
 ```bash
 # 在项目根目录下
 mkdir -p .claude/skills
-git submodule add https://github.com/<你的用户名>/prd-framework-skill.git .claude/skills/prd-framework
+git submodule add https://github.com/<你的用户名>/pm-req-clear.git .claude/skills/prd-framework
 ```
 
 ### 使用方法
@@ -36,7 +36,7 @@ git submodule add https://github.com/<你的用户名>/prd-framework-skill.git .
 
 ```bash
 # 克隆到 Copilot CLI 的 skills 目录
-gh copilot skills add https://github.com/<你的用户名>/prd-framework-skill
+gh copilot skills add https://github.com/<你的用户名>/pm-req-clear
 ```
 
 参考 `references/copilot-tools.md` 了解工具名映射。

@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 投放搭建助手 — 原型演示</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #0c0e14;
+    --bg-secondary: #13161e;
+    --bg-card: #1a1e2a;
+    --bg-card-hover: #1f2435;
+    --bg-input: #0c0e14;
+    --border: #252a3a;
+    --border-light: #2e3445;
+    --text-primary: #e8eaed;
+    --text-secondary: #9aa0b0;
+    --text-tertiary: #5c6278;
+    --accent-cyan: #22d3ee;
+    --accent-cyan-dim: #0891b2;
+    --accent-amber: #fbbf24;
+    --accent-amber-dim: #d97706;
+    --accent-green: #34d399;
+    --accent-red: #f87171;
+    --accent-purple: #a78bfa;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans SC', -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .sidebar {
+    width: 260px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  .sidebar-header {
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-header h1 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sidebar-header .badge {
+    font-size: 10px;
+    font-weight: 500;
+    background: var(--accent-cyan);
+    color: #000;
+    padding: 1px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .sidebar-sub {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+  }
+
+  .session-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+
+  .session-item {
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 2px;
+  }
+
+  .session-item:hover { background: var(--bg-card); color: var(--text-primary); }
+  .session-item.active { background: var(--bg-card); color: var(--text-primary); border-left: 2px solid var(--accent-cyan); }
+
+  .session-item .time {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+  }
+
+  .sidebar-footer {
+    padding: 14px 18px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-tertiary);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .chat-header {
+    padding: 14px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-secondary);
+  }
+
+  .chat-header .title { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+
+  .chat-header .status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--accent-green);
+  }
+
+  .chat-header .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scroll-behavior: smooth;
+  }
+
+  .messages::-webkit-scrollbar { width: 6px; }
+  .messages::-webkit-scrollbar-track { background: transparent; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .msg {
+    display: flex;
+    gap: 12px;
+    max-width: 780px;
+    animation: fade-in 0.3s ease;
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .msg.bot { align-self: flex-start; }
+
+  .msg-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  .msg.user .msg-avatar { background: var(--accent-cyan-dim); color: #fff; }
+  .msg.bot .msg-avatar { background: var(--bg-card); color: var(--accent-cyan); border: 1px solid var(--border); }
+
+  .msg-body {
+    background: var(--bg-card);
+    padding: 14px 18px;
+    border-radius: var(--radius);
+    line-height: 1.6;
+    font-size: 14px;
+    min-width: 0;
+  }
+
+  .msg.user .msg-body { background: var(--accent-cyan-dim); color: #fff; border-bottom-right-radius: 4px; }
+  .msg.bot .msg-body { border-bottom-left-radius: 4px; }
+  .msg-body .text { white-space: pre-wrap; word-break: break-word; }
+
+  .material-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 12px 0 4px;
+  }
+
+  .material-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    cursor: default;
+    transition: all 0.15s;
+  }
+
+  .material-card:hover { border-color: var(--border-light); }
+  .material-card .name { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+  .material-card .meta { font-size: 11px; color: var(--text-tertiary); display: flex; gap: 12px; }
+  .material-card .tag { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 3px; background: var(--bg-card); color: var(--text-secondary); margin-top: 6px; }
+  .material-card .ctr { color: var(--accent-green); font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+
+  .material-note {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: var(--bg-primary);
+    border-radius: var(--radius-sm);
+    border-left: 2px solid var(--accent-amber);
+  }
+
+  .plan-overview {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 12px 0;
+  }
+
+  .stat-item {
+    background: var(--bg-primary);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    text-align: center;
+  }
+
+  .stat-item .value { font-size: 18px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent-cyan); }
+  .stat-item .label { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+  .plan-group {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-top: 10px;
+    overflow: hidden;
+  }
+
+  .plan-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--bg-primary);
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+  }
+
+  .plan-group-header:hover { background: var(--bg-card-hover); }
+  .plan-group-header .left { display: flex; align-items: center; gap: 10px; }
+  .plan-group-header .group-name { font-size: 13px; font-weight: 500; }
+  .plan-group-header .group-count { font-size: 11px; color: var(--text-tertiary); background: var(--bg-card); padding: 1px 7px; border-radius: 4px; }
+  .plan-group-header .toggle { color: var(--text-tertiary); transition: transform 0.2s; font-size: 12px; }
+  .plan-group-header .toggle.open { transform: rotate(90deg); }
+
+  .plan-details { display: none; border-top: 1px solid var(--border); }
+  .plan-details.open { display: block; }
+
+  .plan-row {
+    padding: 8px 14px;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .plan-row:last-child { border-bottom: none; }
+  .plan-row .idx { color: var(--text-tertiary); min-width: 24px; }
+  .plan-row .field { color: var(--text-primary); }
+  .plan-row .sep { color: var(--text-tertiary); }
+
+  .plan-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+  .btn {
+    padding: 8px 18px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+
+  .btn-primary { background: var(--accent-cyan); color: #000; }
+  .btn-primary:hover { background: #67e8f9; }
+  .btn-secondary { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--text-tertiary); color: var(--text-primary); }
+  .btn-outline { background: transparent; color: var(--accent-cyan); border: 1px solid var(--accent-cyan-dim); }
+  .btn-outline:hover { background: rgba(34,211,238,0.08); }
+
+  .quick-actions {
+    display: flex;
+    gap: 8px;
+    padding: 12px 28px 0;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+  }
+
+  .quick-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+
+  .quick-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); border-color: var(--text-tertiary); }
+  .quick-btn .icon { font-size: 14px; }
+
+  .input-area { padding: 10px 28px 18px; background: var(--bg-secondary); }
+  .input-wrap { display: flex; gap: 10px; align-items: flex-end; }
+
+  .input-wrap textarea {
+    flex: 1;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 14px;
+    color: var(--text-primary);
+    font-family: inherit;
+    resize: none;
+    min-height: 44px;
+    max-height: 120px;
+    line-height: 1.5;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .input-wrap textarea:focus { border-color: var(--accent-cyan-dim); }
+  .input-wrap textarea::placeholder { color: var(--text-tertiary); }
+
+  .btn-send {
+    width: 44px; height: 44px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--accent-cyan);
+    color: #000;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+
+  .btn-send:hover { background: #67e8f9; }
+  .btn-send svg { width: 18px; height: 18px; }
+
+  .input-hint { font-size: 11px; color: var(--text-tertiary); margin-top: 8px; }
+
+  .result-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 12px 0;
+  }
+
+  .result-item {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    text-align: center;
+  }
+
+  .result-item .num { font-size: 24px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .result-item .num.success { color: var(--accent-green); }
+  .result-item .num.fail { color: var(--accent-red); }
+  .result-item .num.time { color: var(--accent-amber); }
+  .result-item .desc { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .messages { padding: 16px; }
+    .input-area { padding: 12px 16px 16px; }
+    .material-grid { grid-template-columns: 1fr; }
+    .plan-overview { grid-template-columns: repeat(2, 1fr); }
+    .result-summary { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>投放搭建助手 <span class="badge">Agent</span></h1>
+    <div class="sidebar-sub">AI 驱动的投放计划搭建</div>
+  </div>
+  <div class="session-list">
+    <div class="session-item active" onclick="viewSession(this,'搭建 8月新品推广计划')">
+      搭建 8月新品推广计划
+      <div class="time">10 分钟前</div>
+    </div>
+    <div class="session-item" onclick="viewSession(this,'618 活动投放复盘')">
+      618 活动投放复盘
+      <div class="time">2 小时前</div>
+    </div>
+    <div class="session-item" onclick="viewSession(this,'查询上周消耗数据')">
+      查询上周消耗数据
+      <div class="time">昨天</div>
+    </div>
+    <div class="session-item" onclick="viewSession(this,'分析短视频跑量原因')">
+      分析短视频跑量原因
+      <div class="time">3 天前</div>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <span>v1.0 原型</span>
+    <span>PRD Demo</span>
+  </div>
+</aside>
+
+<div class="main">
+
+  <div class="chat-header">
+    <div class="title">智能投放搭建</div>
+    <div class="status"><span class="status-dot"></span> Agent 在线</div>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="msg bot">
+      <div class="msg-avatar">AI</div>
+      <div class="msg-body">
+        <div class="text">你好！我是投放搭建助手。可以在我这里完成从选素材到推送的全流程。
+
+试试点击下方的快捷按钮，或者直接输入你的需求：</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-actions">
+    <button class="quick-btn" onclick="quickAction('query')"><span class="icon">📊</span> 查消耗</button>
+    <button class="quick-btn" onclick="quickAction('material')"><span class="icon">🔍</span> 选素材</button>
+    <button class="quick-btn" onclick="quickAction('build')"><span class="icon">🏗️</span> 快速搭建</button>
+  </div>
+
+  <div class="input-area">
+    <div class="input-wrap">
+      <textarea id="chatInput" rows="1" placeholder="输入搭建需求，用自然语言描述…" oninput="autoResize(this)"></textarea>
+      <button class="btn-send" onclick="handleSend()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <div class="input-hint">支持：搭建计划 · 查询数据 · 效果分析</div>
+  </div>
+
+</div>
+
+<script>
+var msgContainer = document.getElementById('messages');
+var chatInput = document.getElementById('chatInput');
+var step = 0;
+var inHistory = false;
+var materialShown = false;
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function addMessage(type, content) {
+  var div = document.createElement('div');
+  div.className = 'msg ' + type;
+  var avatar = document.createElement('div');
+  avatar.className = 'msg-avatar';
+  avatar.textContent = type === 'user' ? '你' : 'AI';
+  var body = document.createElement('div');
+  body.className = 'msg-body';
+  body.innerHTML = content;
+  if (type === 'user') {
+    div.appendChild(body);
+    div.appendChild(avatar);
+  } else {
+    div.appendChild(avatar);
+    div.appendChild(body);
+  }
+  msgContainer.appendChild(div);
+  msgContainer.scrollTop = msgContainer.scrollHeight;
+  return div;
+}
+
+function setInputEnabled(enabled) {
+  chatInput.disabled = !enabled;
+  chatInput.placeholder = enabled ? '输入搭建需求，用自然语言描述…' : '历史会话查看模式…';
+}
+
+function quickAction(action) {
+  if (inHistory) {
+    inHistory = false;
+    resetChat();
+    setInputEnabled(true);
+  }
+  if (action === 'query') {
+    addMessage('user', '<div class="text">📊 查消耗</div>');
+    setTimeout(function() {
+      addMessage('bot', '<div class="text">你想查什么数据？请告诉我时间范围和具体指标。<br><br>例如：查本周的消耗和展示数据<br>查上周的转化率和 CPA<br>查近 7 天各广告组的数据</div>');
+    }, 400);
+  } else if (action === 'material') {
+    addMessage('user', '<div class="text">🔍 选素材</div>');
+    setTimeout(function() {
+      addMessage('bot', '<div class="text">你想用什么条件筛选素材？比如时间范围、标签、还是按表现数据排序？</div>');
+    }, 400);
+  } else if (action === 'build') {
+    addMessage('user', '<div class="text">🏗️ 快速搭建</div>');
+    setTimeout(function() {
+      addMessage('bot', '<div class="text">好的，我来帮你搭建计划。请告诉我以下信息：<br><br>1. 投哪个平台？（头条/快手）<br>2. 建多少条计划？<br>3. 总预算多少？<br>4. 出价方式是什么？</div>');
+    }, 400);
+  }
+}
+
+function resetChat() {
+  msgContainer.innerHTML = '';
+  step = 0;
+  materialShown = false;
+}
+
+function handleSend() {
+  var text = chatInput.value.trim();
+  if (!text) return;
+  if (inHistory) {
+    inHistory = false;
+    resetChat();
+    setInputEnabled(true);
+  }
+  addMessage('user', '<div class="text">' + escapeHtml(text) + '</div>');
+  chatInput.value = '';
+  chatInput.style.height = 'auto';
+  setTimeout(function() { simulateBot(text); }, 600);
+}
+
+function simulateBot(input) {
+  if (input.indexOf('消耗') !== -1 || input.indexOf('花费') !== -1 || input.indexOf('展示') !== -1 || input.indexOf('转化') !== -1 || input.indexOf('CPA') !== -1) {
+    addMessage('bot', '<div class="text">📊 查询结果如下：</div>' +
+      '<div style="margin:8px 0">' +
+      '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
+      '<tr style="border-bottom:1px solid var(--border);color:var(--text-tertiary);font-size:11px">' +
+      '<th style="padding:6px 8px;text-align:left">日期</th>' +
+      '<th style="padding:6px 8px;text-align:right">花费</th>' +
+      '<th style="padding:6px 8px;text-align:right">展示</th>' +
+      '<th style="padding:6px 8px;text-align:right">CTR</th>' +
+      '<th style="padding:6px 8px;text-align:right">CPA</th>' +
+      '<th style="padding:6px 8px;text-align:right">转化</th>' +
+      '</tr>' +
+      '<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 8px">06/10</td><td style="padding:6px 8px;text-align:right">¥3,200</td><td style="padding:6px 8px;text-align:right">823,000</td><td style="padding:6px 8px;text-align:right">1.2%</td><td style="padding:6px 8px;text-align:right">¥89</td><td style="padding:6px 8px;text-align:right">36</td></tr>' +
+      '<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 8px">06/11</td><td style="padding:6px 8px;text-align:right">¥4,100</td><td style="padding:6px 8px;text-align:right">1,012,000</td><td style="padding:6px 8px;text-align:right">1.2%</td><td style="padding:6px 8px;text-align:right">¥85</td><td style="padding:6px 8px;text-align:right">48</td></tr>' +
+      '<tr><td style="padding:6px 8px">06/12</td><td style="padding:6px 8px;text-align:right">¥3,800</td><td style="padding:6px 8px;text-align:right">756,000</td><td style="padding:6px 8px;text-align:right">1.2%</td><td style="padding:6px 8px;text-align:right">¥86</td><td style="padding:6px 8px;text-align:right">44</td></tr>' +
+      '</table></div>' +
+      '<div style="font-size:12px;color:var(--text-tertiary)">总花费：¥11,100 | 总展示：2,591,000 | 平均CPA：¥86.7</div>');
+    return;
+  }
+  if (input.indexOf('点击率') !== -1 || input.indexOf('最近') !== -1 || input.indexOf('标签') !== -1 || input.indexOf('CTR') !== -1 || input.indexOf('素材') !== -1) {
+    setTimeout(function() { showMaterialResult(); }, 600);
+    return;
+  }
+  if (input.indexOf('平台') !== -1 || input.indexOf('预算') !== -1 || input.indexOf('出价') !== -1 || input.indexOf('条') !== -1 || input.indexOf('头条') !== -1 || input.indexOf('快手') !== -1) {
+    if (!materialShown) {
+      setTimeout(function() { showMaterialResult(); }, 600);
+    } else {
+      showPlanPreview();
+    }
+    return;
+  }
+  if (step === 0) {
+    showMaterialResult();
+  } else if (step === 1) {
+    addMessage('bot', '<div class="text">请先确认素材选择，或调整筛选条件。</div>');
+  } else if (step === 2 || step === 3) {
+    if (input.indexOf('预算') !== -1 || input.indexOf('改') !== -1) {
+      addMessage('bot', '<div class="text">已更新参数，重新生成中…</div>');
+      setTimeout(function() { showPlanPreview(); }, 800);
+    } else {
+      addMessage('bot', '<div class="text">请在下方选择操作：确认创建或修改参数。</div>');
+    }
+  } else {
+    addMessage('bot', '<div class="text">请描述你的搭建需求，或者点击上方的快捷按钮。</div>');
+  }
+}
+
+function showMaterialResult() {
+  materialShown = true;
+  step = 1;
+  addMessage('bot',
+    '<div class="text">已从素材库匹配到以下视频素材：</div>' +
+    '<div class="material-grid">' +
+    '<div class="material-card"><div class="name">产品展示_v3.mp4</div><div class="meta"><span class="ctr">CTR 12%</span><span>上传 06/10</span></div><div class="tag"># 横屏 16:9</div></div>' +
+    '<div class="material-card"><div class="name">场景演示_新.mp4</div><div class="meta"><span class="ctr">CTR 10%</span><span>上传 06/08</span></div><div class="tag"># 横屏 16:9</div></div>' +
+    '<div class="material-card"><div class="name">用户证言_剪辑版.mp4</div><div class="meta"><span class="ctr">CTR 8%</span><span>上传 06/05</span></div><div class="tag"># 竖屏 9:16</div></div>' +
+    '<div class="material-card"><div class="name">功能对比_2.0.mp4</div><div class="meta"><span class="ctr">CTR 7%</span><span>上传 06/03</span></div><div class="tag"># 横屏 16:9</div></div>' +
+    '<div class="material-card"><div class="name">开箱体验_v2.mp4</div><div class="meta"><span class="ctr">CTR 6%</span><span>上传 06/01</span></div><div class="tag"># 竖屏 9:16</div></div>' +
+    '</div>' +
+    '<div class="material-note">📝 文案将从 100 条文案库中自动随机匹配</div>' +
+    '<div class="plan-actions">' +
+    '<button class="btn btn-primary" onclick="confirmMaterial()">确认素材</button>' +
+    '<button class="btn btn-secondary" onclick="editMaterial()">调整条件</button>' +
+    '</div>'
+  );
+}
+
+function confirmMaterial() {
+  addMessage('bot', '<div class="text">✅ 素材已确认。正在根据你的需求生成搭建方案…</div>');
+  setTimeout(function() { showPlanPreview(); }, 1000);
+}
+
+function editMaterial() {
+  addMessage('bot', '<div class="text">请告诉我需要调整什么条件，比如放宽时间范围、换个排序方式、或者增加素材类型。</div>');
+  step = 0;
+}
+
+function showPlanPreview() {
+  step = 2;
+  var groups = [
+    { name: '组合 A', count: 30, desc: '视频1 × 文案X' },
+    { name: '组合 B', count: 25, desc: '视频1 × 文案Y' },
+    { name: '组合 C', count: 25, desc: '视频2 × 文案X' },
+    { name: '组合 D', count: 20, desc: '视频2 × 文案Y' },
+  ];
+  var groupsHtml = '';
+  for (var gi = 0; gi < groups.length; gi++) {
+    var g = groups[gi];
+    var rowsHtml = '';
+    for (var i = 1; i <= Math.min(g.count, 3); i++) {
+      rowsHtml += '<div class="plan-row">' +
+        '<span class="idx">#' + i + '</span>' +
+        '<span class="field">tt_' + g.name.replace('组合 ','') + '_v' + (gi+1) + '_cX_' + String(i).padStart(3,'0') + '</span>' +
+        '<span class="sep">|</span><span>oCPM ¥120</span>' +
+        '<span class="sep">|</span><span>日报 ¥500</span>' +
+        '<span class="sep">|</span><span>18-40岁</span>' +
+        '<span class="sep">|</span><span>全天</span>' +
+        '</div>';
+    }
+    if (g.count > 3) {
+      rowsHtml += '<div class="plan-row" style="color:var(--text-tertiary);font-family:inherit;font-size:11px;justify-content:center;padding:6px">… 其余 ' + (g.count - 3) + ' 条参数同上，编号递增</div>';
+    }
+    groupsHtml += '<div class="plan-group">' +
+      '<div class="plan-group-header" onclick="toggleGroup(this)">' +
+      '<div class="left"><span class="group-name">' + g.name + '</span><span class="group-count">' + g.desc + ' · ' + g.count + '条</span></div>' +
+      '<span class="toggle">▸</span></div>' +
+      '<div class="plan-details">' + rowsHtml + '</div></div>';
+  }
+  addMessage('bot',
+    '<div class="text">已生成搭建方案，请预览确认：</div>' +
+    '<div class="plan-overview">' +
+    '<div class="stat-item"><div class="value">100</div><div class="label">计划总数</div></div>' +
+    '<div class="stat-item"><div class="value" style="color:var(--accent-amber)">¥50,000</div><div class="label">总预算（¥500/条）</div></div>' +
+    '<div class="stat-item"><div class="value" style="color:var(--accent-purple)">06/23 → 06/29</div><div class="label">投放时间 · 7天</div></div>' +
+    '<div class="stat-item"><div class="value" style="color:var(--accent-green)">头条 + 快手</div><div class="label">投放平台</div></div>' +
+    '</div>' + groupsHtml +
+    '<div class="plan-actions">' +
+    '<button class="btn btn-primary" onclick="confirmPlan()">确认全部创建</button>' +
+    '<button class="btn btn-outline" onclick="modifyPlan()">修改参数</button>' +
+    '<button class="btn btn-secondary" onclick="editMaterial()">返回改素材</button></div>'
+  );
+}
+
+function toggleGroup(header) {
+  var details = header.nextElementSibling;
+  var toggle = header.querySelector('.toggle');
+  if (details) { details.classList.toggle('open'); }
+  if (toggle) { toggle.classList.toggle('open'); }
+}
+
+function confirmPlan() {
+  addMessage('bot', '<div class="text">正在推送至各平台…</div><div style="margin-top:4px;font-size:13px;color:var(--text-secondary)">头条 50 条 · 快手 50 条</div>');
+  setTimeout(function() { showResult(); }, 1500);
+}
+
+function modifyPlan() {
+  addMessage('bot', '<div class="text">请告诉我需要修改什么参数（预算、数量、出价、平台等），我来重新生成。</div>');
+  step = 3;
+}
+
+function showResult() {
+  addMessage('bot',
+    '<div class="text">✅ 创建完成！</div>' +
+    '<div class="result-summary">' +
+    '<div class="result-item"><div class="num success">100</div><div class="desc">创建成功</div></div>' +
+    '<div class="result-item"><div class="num fail">0</div><div class="desc">创建失败</div></div>' +
+    '<div class="result-item"><div class="num time">4m 12s</div><div class="desc">总耗时</div></div>' +
+    '</div>' +
+    '<div style="font-size:12px;color:var(--text-tertiary);margin-top:4px"><span>头条 × 50 条 — 全部成功</span><br><span>快手 × 50 条 — 全部成功</span></div>' +
+    '<div class="plan-actions" style="margin-top:12px">' +
+    '<button class="btn btn-primary" onclick="startNew()">再建一批</button>' +
+    '<button class="btn btn-secondary" onclick="viewDetail()">查看创建详情</button></div>'
+  );
+  step = 99;
+}
+
+function startNew() {
+  addMessage('bot', '<div class="text">好的，请告诉我新一轮的搭建需求。</div>');
+  step = 0;
+}
+
+function viewDetail() {
+  addMessage('bot', '<div class="text">计划详情已对接内部系统，可在「投放管理」页面查看每条计划的实时状态和跑量数据。</div>');
+}
+
+function viewSession(el, name) {
+  var items = document.querySelectorAll('.session-item');
+  for (var i = 0; i < items.length; i++) { items[i].classList.remove('active'); }
+  el.classList.add('active');
+  inHistory = true;
+  setInputEnabled(false);
+  resetChat();
+
+  var header = document.createElement('div');
+  header.style.cssText = 'text-align:center;padding:10px 0;font-size:12px;color:var(--text-tertiary);border-bottom:1px solid var(--border);margin-bottom:8px';
+  header.textContent = '\u{1F4CB} ' + name + '（历史会话，只读）';
+  msgContainer.appendChild(header);
+
+  var historyData = {
+    '搭建 8月新品推广计划': [
+      { type: 'user', text: '用最近两周点击率前5的视频素材，建100条计划投头条和快手，总预算5万，oCPM出价，下周一上线跑7天' },
+      { type: 'bot', text: '已从素材库匹配到以下视频素材，请确认。共匹配到5个视频素材。' },
+      { type: 'user', text: '确认素材' },
+      { type: 'bot', text: '✅ 素材已确认。正在生成搭建方案…\n\n已生成100条计划方案，总预算¥50,000，头条50条+快手50条。' },
+      { type: 'user', text: '确认创建' },
+      { type: 'bot', text: '✅ 已完成！100条计划全部创建成功，总耗时4分12秒。' },
+    ],
+    '618 活动投放复盘': [
+      { type: 'user', text: '分析一下618活动的投放数据' },
+      { type: 'bot', text: '📊 618活动投放复盘（06/01-06/18）\n\n总消耗：¥128,000\n总展示：28,471,239\n平均CTR：1.8%\n平均CPA：¥72\n\n💡 发现：6月15日CTR异常下降至1.1%，建议排查当天素材是否有变动。' },
+      { type: 'user', text: '看看6月15日的数据' },
+      { type: 'bot', text: '6月15日详细数据：\n消耗：¥8,200\n展示：1,847,000\nCTR：1.1%\nCPA：¥95\n\n当天有3条计划素材被系统替换，建议检查替换后的素材是否符合规格。' },
+    ],
+    '查询上周消耗数据': [
+      { type: 'user', text: '查一下上周的消耗数据' },
+      { type: 'bot', text: '📊 上周（06/10-06/16）消耗数据：\n\n总消耗：¥82,300\n日均消耗：¥11,757\n头条占比：62%\n快手占比：38%\n\n详情可追问具体维度的数据。' },
+    ],
+    '分析短视频跑量原因': [
+      { type: 'user', text: '分析一下这条短视频为什么跑量好' },
+      { type: 'bot', text: '🔍 短视频「产品展示_v3」跑量分析：\n\n该素材CTR 3.2%（均值1.8%），远高于平均水平。\n关键差异点：\n1. 开头3秒有强钩子（价格对比）\n2. 竖屏9:16格式，完播率高\n3. 标签覆盖精准\n\n建议：增加类似结构的素材，扩大投放。' },
+    ],
+  };
+
+  var msgs = historyData[name] || [];
+  for (var i = 0; i < msgs.length; i++) {
+    var m = msgs[i];
+    var div = document.createElement('div');
+    div.className = 'msg ' + m.type;
+    var avatar = document.createElement('div');
+    avatar.className = 'msg-avatar';
+    avatar.textContent = m.type === 'user' ? '你' : 'AI';
+    var body = document.createElement('div');
+    body.className = 'msg-body';
+    var textDiv = document.createElement('div');
+    textDiv.className = 'text';
+    textDiv.textContent = m.text;
+    body.appendChild(textDiv);
+    if (m.type === 'user') { div.appendChild(body); div.appendChild(avatar); }
+    else { div.appendChild(avatar); div.appendChild(body); }
+    msgContainer.appendChild(div);
+  }
+  msgContainer.scrollTop = msgContainer.scrollHeight;
+}
+
+chatInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    handleSend();
+  }
+});
+</script>
+</body>
+</html>
