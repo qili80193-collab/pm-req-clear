@@ -1,4 +1,4 @@
-# PRD Framework — AI Skill
+# 产品需求分析框架 — 九步帮你把需求想清楚
 
 从模糊想法到可交付的 PRD 文档，一站式产品需求分析框架。
 
@@ -32,13 +32,11 @@
 ## 项目结构
 
 ```
-prd-framework/
+product-req-framework/
 ├── SKILL.md              # 核心 skill 文件
 ├── README.md             # 本文档
 ├── install.md            # 安装指南
-└── references/
-    ├── copilot-tools.md  # Copilot CLI 工具映射
-    └── codex-tools.md    # GitHub Codex 工具映射
+└── prd-demo.html         # PRD 输出示例
 ```
 
 ## 跨平台兼容
